@@ -1,0 +1,49 @@
+name: PerfReport CI
+
+# Run on every push to main and on every pull request.
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+# This repo holds all of my assignments, so the Rust project lives in the
+# PerfReport folder. Every "run" step below runs inside that folder.
+defaults:
+  run:
+    working-directory: PerfReport
+
+jobs:
+  # Job 1: format, lint, build, and test the Rust code.
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Install the Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Check formatting
+        run: cargo fmt --all --check
+
+      - name: Lint with clippy
+        run: cargo clippy --all-targets
+
+      - name: Build (release)
+        run: cargo build --release --verbose
+
+      - name: Run tests
+        run: cargo test --verbose
+
+  # Job 2: build the container image. Only runs if job 1 passed (the gate).
+  docker:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Build the container image
+        run: docker build -t perfreport:ci .

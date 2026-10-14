@@ -1,0 +1,13 @@
+[package]
+name = "perfreport"
+version = "0.1.0"
+edition = "2021"
+
+# The sysinfo crate reads CPU, memory, uptime, and disk info in a cross-platform
+# way. Cargo downloads it for you the first time you build.
+[dependencies]
+sysinfo = "0.33"
+
+[[bin]]
+name = "perfreport"
+path = "src/main.rs"
