@@ -1,0 +1,40 @@
+title: Suspicious SSH Brute Force Followed by Privilege Escalation and Backdoor Account Creation  
+id: 5d8e7f6a-3c2b-1a9d-8e7f-6a5b4c3d2e1f  
+status: experimental  
+description: Detects rapid SSH authentication failures across multiple users from external IPs, followed by sudo privilege escalation to root and creation of a new user with UID/GID 0 (root privileges).  
+author: Detection Engineer  
+date: 2024/07/25  
+logsource:  
+  product: linux  
+  service: auth  
+detection:  
+  selection:  
+    - log_source: 'sshd'  
+      event_type: 'Failed password'  
+      user: 'git|test|postgres|ftpuser|user'  
+      source_ip: '198.51.100.*|203.0.113.*|192.0.2.*|192.0.2.*'  
+  selection_2:  
+    - log_source: 'sshd'  
+      event_type: 'Invalid user'  
+      user: 'user|oracle'  
+      source_ip: '203.0.113.*'  
+  selection_3:  
+    - log_source: 'sudo'  
+      command: '/bin/cat /etc/shadow'  
+      user: 'jdoe'  
+  selection_4:  
+    - log_source: 'useradd'  
+      user_name: 'svc_backdoor'  
+      uid: '0'  
+      gid: '0'  
+  condition: (selection or selection_2) and selection_3 and selection_4  
+fields:  
+  - user  
+  - source_ip  
+  - command  
+  - user_name  
+  - uid  
+  - gid  
+falsepositives:  
+  - Legitimate security testing with coordinated brute-force, privilege escalation, and account creation (rare).  
+level: critical
